@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f0f10" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <title>Aastha’s Sudoku</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">Aastha’s Sudoku</div>
+      <div class="controls">
+        <button id="btn-undo" title="Undo">↶</button>
+        <button id="btn-erase" title="Erase">⌫</button>
+        <button id="btn-notes" class="toggle" title="Notes">✎</button>
+        <button id="btn-hint" title="Hint">★</button>
+        <button id="btn-check" title="Check">✔</button>
+        <button id="btn-new" title="New Game">⟳</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="board-wrap">
+        <div id="board" class="board" role="grid" aria-label="Sudoku board"></div>
+      </section>
+      <section class="side">
+        <div class="timer" id="timer">00:00</div>
+        <div class="level">
+          <label for="difficulty">Difficulty</label>
+          <select id="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+            <option value="expert">Expert</option>
+          </select>
+        </div>
+        <div class="status" id="status"></div>
+        <div class="made">Made with ❤️ by Raunak for Aastha</div>
+      </section>
+    </main>
+
+    <footer class="numpad" id="numpad" aria-label="Number pad"></footer>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Prevent iOS double-tap zoom & rubber-band
+    document.addEventListener('touchend', (e)=>{
+      if (e.touches && e.touches.length > 1) e.preventDefault();
+    }, {passive:false});
+    document.addEventListener('gesturestart', (e)=> e.preventDefault());
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', ()=>navigator.serviceWorker.register('./sw.js'));
+    }
+  </script>
+</body>
+</html>
