@@ -1,25 +1,14 @@
-# Aastha’s Sudoku 💖 (Pink Edition PWA)
+# Aastha’s Sudoku 💗 (Simple Pink PWA)
+- Clean, cute pink theme
+- Reliable generator & unique-solution puzzles
+- Easy/Medium/Hard, New, Hint
+- iPhone-friendly (no text inputs, no page scroll), offline PWA
 
-A cute, pink-themed Sudoku Progressive Web App tuned for iPhone 15. Features:
-- Daily puzzle (deterministic), difficulty levels
-- Notes mode, smart notes (auto-clears peers), undo, hint, check
-- Optional mistake limit (3)
-- Peer highlighting toggle
-- Timer, auto-save/resume
-- Confetti celebration on win
-- Theme & size settings (Pink / Rose Gold / Night; Compact / Cozy / Spacious)
-- Offline support (PWA), full-screen on iOS when added to Home Screen
+## Replace existing GitHub Pages build
+1) Open your Sudoku repo on GitHub.
+2) **Add file → Upload files** → drag-drop all files from this folder (including `icons/`).
+3) Commit to `main`. The URL stays the same.
+4) If the old version persists on iPhone, remove the Home Screen app and re-add (PWA cache).
 
-## Replace existing GitHub Pages build (keep the same link)
-1. Open your existing repo on GitHub (where you deployed the earlier PWA).
-2. Click **Add file → Upload files** and drag-drop *all files* from this folder (including `icons/`), allowing GitHub to **replace** existing files.
-3. Scroll down → **Commit changes** to the `main` branch.
-4. Wait for Pages to redeploy (usually under a minute). The existing URL stays the same.
-
-> If the app still shows the old version on iPhone, it’s the PWA cache. Either wait a bit (the service worker has been version-bumped), or long-press the home-screen icon → **Delete App**, reopen the URL in Safari, and **Add to Home Screen** again.
-
-## First-time publish (if needed)
-Same as above, then **Settings → Pages → Source: Deploy from a branch** → `main` / `/ (root)`.
-
-## iPhone install
-Open the URL in Safari → **Share → Add to Home Screen** → launch from the icon.
+## Install on iPhone
+Open the Pages URL in Safari → Share → **Add to Home Screen**.
