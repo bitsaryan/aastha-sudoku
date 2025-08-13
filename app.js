@@ -211,5 +211,6 @@ diffEl.addEventListener('change', ()=>{
 
 // Init
 buildBoard();
+buildNumpad();
 generatePuzzle('medium');
 render();
