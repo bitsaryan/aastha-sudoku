@@ -1,22 +1,25 @@
-# Aastha’s Sudoku (PWA)
+# Aastha’s Sudoku 💖 (Pink Edition PWA)
 
-A free, offline-first Sudoku Progressive Web App tuned for iPhone home‑screen use.
+A cute, pink-themed Sudoku Progressive Web App tuned for iPhone 15. Features:
+- Daily puzzle (deterministic), difficulty levels
+- Notes mode, smart notes (auto-clears peers), undo, hint, check
+- Optional mistake limit (3)
+- Peer highlighting toggle
+- Timer, auto-save/resume
+- Confetti celebration on win
+- Theme & size settings (Pink / Rose Gold / Night; Compact / Cozy / Spacious)
+- Offline support (PWA), full-screen on iOS when added to Home Screen
 
-## Run locally
-Just open `index.html` in your browser, or use any static server (optional).
+## Replace existing GitHub Pages build (keep the same link)
+1. Open your existing repo on GitHub (where you deployed the earlier PWA).
+2. Click **Add file → Upload files** and drag-drop *all files* from this folder (including `icons/`), allowing GitHub to **replace** existing files.
+3. Scroll down → **Commit changes** to the `main` branch.
+4. Wait for Pages to redeploy (usually under a minute). The existing URL stays the same.
 
-## Deploy free on GitHub Pages
-1. Create a new repo on GitHub (e.g., `aastha-sudoku`).
-2. Upload all files from this folder (including `icons/`).
-3. In the repo: **Settings → Pages → Build and deployment → Source: Deploy from a branch**.
-4. Set **Branch: `main`** and **Folder: `/ (root)`** → Save.
-5. Wait for the Pages URL to appear (something like `https://<username>.github.io/aastha-sudoku/`).
+> If the app still shows the old version on iPhone, it’s the PWA cache. Either wait a bit (the service worker has been version-bumped), or long-press the home-screen icon → **Delete App**, reopen the URL in Safari, and **Add to Home Screen** again.
 
-## Install on iPhone 15 (PWA)
-1. Open the Pages URL in **Safari**.
-2. Tap **Share** → **Add to Home Screen**.
-3. Launch from the home‑screen icon (full‑screen, no Safari UI, offline supported).
+## First-time publish (if needed)
+Same as above, then **Settings → Pages → Source: Deploy from a branch** → `main` / `/ (root)`.
 
-## Tips
-- If the board ever looks cached after updating, long‑press the app icon → **Delete App** (removes PWA cache) and re‑add to Home Screen.
-- Game state auto‑saves; finishing clears it.
+## iPhone install
+Open the URL in Safari → **Share → Add to Home Screen** → launch from the icon.

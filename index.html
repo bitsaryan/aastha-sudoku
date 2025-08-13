@@ -5,52 +5,98 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#0f0f10" />
+  <meta name="theme-color" content="#1a0f16" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <title>Aastha’s Sudoku</title>
+  <title>Aastha’s Sudoku 💖</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div id="app">
     <header class="topbar">
-      <div class="brand">Aastha’s Sudoku</div>
+      <div class="brand">Aastha’s Sudoku <span class="heart">💖</span></div>
       <div class="controls">
-        <button id="btn-undo" title="Undo">↶</button>
-        <button id="btn-erase" title="Erase">⌫</button>
-        <button id="btn-notes" class="toggle" title="Notes">✎</button>
-        <button id="btn-hint" title="Hint">★</button>
-        <button id="btn-check" title="Check">✔</button>
-        <button id="btn-new" title="New Game">⟳</button>
+        <button id="btn-undo" title="Undo" class="chip">↶</button>
+        <button id="btn-erase" title="Erase" class="chip">⌫</button>
+        <button id="btn-notes" class="chip toggle" title="Notes">✎</button>
+        <button id="btn-hint" title="Hint" class="chip">★</button>
+        <button id="btn-check" title="Check" class="chip">✔</button>
+        <button id="btn-new" title="New Game" class="chip">⟳</button>
+        <button id="btn-settings" title="Settings" class="chip">⚙</button>
       </div>
     </header>
 
     <main class="content">
       <section class="board-wrap">
         <div id="board" class="board" role="grid" aria-label="Sudoku board"></div>
+        <canvas id="confetti"></canvas>
       </section>
       <section class="side">
-        <div class="timer" id="timer">00:00</div>
-        <div class="level">
-          <label for="difficulty">Difficulty</label>
-          <select id="difficulty">
-            <option value="easy">Easy</option>
-            <option value="medium" selected>Medium</option>
-            <option value="hard">Hard</option>
-            <option value="expert">Expert</option>
-          </select>
+        <div class="card">
+          <div class="timer" id="timer">00:00</div>
+          <div class="level">
+            <label for="difficulty">Difficulty</label>
+            <select id="difficulty">
+              <option value="easy">Easy</option>
+              <option value="medium" selected>Medium</option>
+              <option value="hard">Hard</option>
+              <option value="expert">Expert</option>
+            </select>
+          </div>
+          <div class="modes">
+            <label class="switch">
+              <input type="checkbox" id="dailyToggle" />
+              <span>Daily Puzzle</span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="mistakeLimit" />
+              <span>Mistake Limit (3)</span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="smartNotes" checked />
+              <span>Smart Notes</span>
+            </label>
+            <label class="switch">
+              <input type="checkbox" id="highlightPeers" checked />
+              <span>Highlight Peers</span>
+            </label>
+          </div>
+          <div class="status" id="status"></div>
         </div>
-        <div class="status" id="status"></div>
-        <div class="made">Made with ❤️ by Raunak for Aastha</div>
+        <div class="card made">Made with 💝 by <b>Raunak</b> for <b>Aastha</b></div>
       </section>
     </main>
 
     <footer class="numpad" id="numpad" aria-label="Number pad"></footer>
   </div>
 
+  <dialog id="settingsDialog" class="settings">
+    <form method="dialog">
+      <h3>Settings</h3>
+      <div class="grid">
+        <label>Theme
+          <select id="themeSelect">
+            <option value="pink" selected>Pink (cute)</option>
+            <option value="rose">Rose Gold</option>
+            <option value="night">Night</option>
+          </select>
+        </label>
+        <label>Board Size
+          <select id="sizeSelect">
+            <option value="compact">Compact</option>
+            <option value="cozy" selected>Cozy</option>
+            <option value="spacious">Spacious</option>
+          </select>
+        </label>
+      </div>
+      <menu>
+        <button value="cancel" class="chip">Close</button>
+      </menu>
+    </form>
+  </dialog>
+
   <script src="app.js"></script>
   <script>
-    // Prevent iOS double-tap zoom & rubber-band
     document.addEventListener('touchend', (e)=>{
       if (e.touches && e.touches.length > 1) e.preventDefault();
     }, {passive:false});

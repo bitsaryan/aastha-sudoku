@@ -1,10 +1,10 @@
 {
-  "name": "Aastha's Sudoku",
+  "name": "Aastha's Sudoku \ud83d\udc96",
   "short_name": "Sudoku",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#0f0f10",
-  "theme_color": "#0f0f10",
+  "background_color": "#1a0f16",
+  "theme_color": "#1a0f16",
   "icons": [
     {
       "src": "icons/icon-192.png",

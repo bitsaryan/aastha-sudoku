@@ -1,7 +1,4 @@
 
-// Aastha's Sudoku - PWA
-// Features: generator, solver, notes mode, undo, hint, check, timer, persistence.
-
 const boardEl = document.getElementById('board');
 const numpadEl = document.getElementById('numpad');
 const statusEl = document.getElementById('status');
@@ -13,18 +10,39 @@ const btnErase = document.getElementById('btn-erase');
 const btnNotes = document.getElementById('btn-notes');
 const btnCheck = document.getElementById('btn-check');
 const btnUndo = document.getElementById('btn-undo');
+const btnSettings = document.getElementById('btn-settings');
 
-// --- State ---
-let grid = Array(81).fill(0);          // current values
-let given = Array(81).fill(false);     // fixed cells
+const dailyToggle = document.getElementById('dailyToggle');
+const mistakeLimitToggle = document.getElementById('mistakeLimit');
+const smartNotesToggle = document.getElementById('smartNotes');
+const highlightPeersToggle = document.getElementById('highlightPeers');
+
+const dialog = document.getElementById('settingsDialog');
+const themeSelect = document.getElementById('themeSelect');
+const sizeSelect = document.getElementById('sizeSelect');
+
+const confetti = document.getElementById('confetti');
+const ctx = confetti.getContext('2d');
+
+let RNG = Math.random;
+function mulberry32(a){ return function(){ var t = a += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; } }
+function seedFromDate(d, diff){
+  const y = d.getFullYear(), m = d.getMonth()+1, day = d.getDate();
+  const map = {easy: 1, medium: 2, hard: 3, expert: 4};
+  return (y*10000 + m*100 + day) * 13 + (map[diff]||2);
+}
+
+let grid = Array(81).fill(0);
+let given = Array(81).fill(false);
 let notes = Array(81).fill(0).map(()=> new Set());
 let solution = Array(81).fill(0);
 let selected = -1;
 let noteMode = false;
 let undoStack = [];
 let timer = { start: 0, elapsed: 0, int: null };
+let mistakes = 0;
+let mistakeLimited = false;
 
-// ---- Helpers ----
 const ROW = (i)=> Math.floor(i/9);
 const COL = (i)=> i%9;
 const BOX = (i)=> Math.floor(ROW(i)/3)*3 + Math.floor(COL(i)/3);
@@ -53,7 +71,6 @@ function isSafe(g, idx, val){
   return true;
 }
 
-// Backtracking solver (returns copy)
 function solve(g){
   const arr = g.slice();
   function findEmpty(){
@@ -65,8 +82,7 @@ function solve(g){
     if (i === -1) return true;
     const options = [];
     for(let v=1;v<=9;v++) if (isSafe(arr, i, v)) options.push(v);
-    // randomize for nicer generation
-    for(let k=options.length-1;k>0;k--){ const j=Math.floor(Math.random()*(k+1)); [options[k],options[j]]=[options[j],options[k]];}
+    for(let k=options.length-1;k>0;k--){ const j=Math.floor(RNG()*(k+1)); [options[k],options[j]]=[options[j],options[k]];}
     for(const v of options){
       arr[i]=v;
       if (dfs()) return true;
@@ -77,13 +93,11 @@ function solve(g){
   return dfs() ? arr : null;
 }
 
-// Generate a full valid solution
 function generateFull(){
   const g = Array(81).fill(0);
-  // seed diagonal 3x3 boxes
   for(let b=0;b<3;b++){
     const nums=[1,2,3,4,5,6,7,8,9];
-    for(let i=nums.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [nums[i],nums[j]]=[nums[j],nums[i]];}
+    for(let i=nums.length-1;i>0;i--){ const j=Math.floor(RNG()*(i+1)); [nums[i],nums[j]]=[nums[j],nums[i]];}
     let idx=0;
     for(let r=b*3; r<b*3+3; r++){
       for(let c=b*3; c<b*3+3; c++){
@@ -95,26 +109,22 @@ function generateFull(){
   return solved ?? generateFull();
 }
 
-// Remove cells to create puzzle with target clues by difficulty
 function carve(solution, difficulty){
-  const diffMap = { easy: 45, medium: 36, hard: 30, expert: 26 }; // number of clues
+  const diffMap = { easy: 45, medium: 36, hard: 30, expert: 26 };
   const clues = diffMap[difficulty] ?? 36;
   const indices=[...Array(81).keys()];
-  // Shuffle indices
-  for(let i=indices.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [indices[i],indices[j]]=[indices[j],indices[i]];}
+  for(let i=indices.length-1;i>0;i--){ const j=Math.floor(RNG()*(i+1)); [indices[i],indices[j]]=[indices[j],indices[i]];}
   const puzzle = solution.slice();
   let removed = 0;
   for(const i of indices){
     const backup = puzzle[i];
     puzzle[i]=0;
-    // ensure unique
     if (!hasUniqueSolution(puzzle)) { puzzle[i]=backup; } else { removed++; }
     if (81 - removed <= clues) break;
   }
   return puzzle;
 }
 
-// Quick uniqueness check (counts up to 2 solutions)
 function hasUniqueSolution(g){
   const arr = g.slice();
   let count = 0;
@@ -134,7 +144,6 @@ function hasUniqueSolution(g){
   return count===1;
 }
 
-// ---- UI Build ----
 function buildBoard(){
   boardEl.innerHTML='';
   for(let i=0;i<81;i++){
@@ -145,18 +154,24 @@ function buildBoard(){
     d.addEventListener('click', ()=> selectCell(i));
     boardEl.appendChild(d);
   }
-  // bold borders via CSS gradients could be added; we keep simple for now
+  const rect = boardEl.getBoundingClientRect();
+  confetti.width = rect.width;
+  confetti.height = rect.height;
+  confetti.style.width = rect.width+'px';
+  confetti.style.height = rect.height+'px';
 }
 
 function render(){
+  const size = document.documentElement.dataset.size || 'cozy';
+  boardEl.style.width = size==='compact' ? '88vw' : (size==='spacious' ? '96vw' : '94vw');
+
   const cells = boardEl.children;
   for(let i=0;i<81;i++){
     const el = cells[i];
-    el.classList.remove('given','selected','peer','same','error');
-    el.innerHTML='';
+    el.className='cell';
     if (given[i]) el.classList.add('given');
     if (i===selected) el.classList.add('selected');
-    if (selected>=0){
+    if (highlightPeersToggle.checked && selected>=0){
       if (ROW(i)===ROW(selected) || COL(i)===COL(selected) || BOX(i)===BOX(selected)) el.classList.add('peer');
       if (grid[i]!==0 && grid[i]===grid[selected]) el.classList.add('same');
     }
@@ -190,20 +205,38 @@ function pushUndo(){
   undoStack.push({
     grid: grid.slice(),
     notes: notes.map(s => new Set([...s])),
-    selected
+    selected,
+    mistakes
   });
-  if (undoStack.length>200) undoStack.shift();
+  if (undoStack.length>300) undoStack.shift();
+}
+
+function autoRemoveNotes(idx, val){
+  if (!smartNotesToggle.checked) return;
+  const ps = peers(idx);
+  for(const j of ps){ if (notes[j].has(val)) notes[j].delete(val); }
 }
 
 function handleNumber(n){
   if (selected<0 || given[selected]) return;
+  if (mistakeLimited && mistakes>=3) return;
   pushUndo();
   if (noteMode){
     if (notes[selected].has(n)) notes[selected].delete(n);
     else notes[selected].add(n);
   }else{
+    const prev = grid[selected];
     grid[selected] = (grid[selected]===n ? 0 : n);
     notes[selected].clear();
+    if (grid[selected]!==0 && grid[selected]!==solution[selected]){
+      mistakes++;
+      pulseStatus(`Oops! Mistakes: ${mistakes}/3`);
+      if (mistakeLimited && mistakes>=3){
+        gameOver();
+      }
+    }else if (grid[selected]!==0){
+      autoRemoveNotes(selected, grid[selected]);
+    }
   }
   render(); save(); checkWin();
 }
@@ -226,6 +259,7 @@ btnUndo.addEventListener('click', ()=>{
   grid = last.grid.slice();
   notes = last.notes.map(s=> new Set([...s]));
   selected = last.selected;
+  mistakes = last.mistakes || 0;
   render(); save();
 });
 
@@ -235,11 +269,11 @@ btnHint.addEventListener('click', ()=>{
   pushUndo();
   grid[selected] = solution[selected];
   notes[selected].clear();
+  autoRemoveNotes(selected, grid[selected]);
   render(); save(); checkWin();
 });
 
 btnCheck.addEventListener('click', ()=>{
-  // highlight wrong cells
   const cells = boardEl.children;
   let errors = 0;
   for(let i=0;i<81;i++){
@@ -254,22 +288,37 @@ btnCheck.addEventListener('click', ()=>{
 });
 
 btnNew.addEventListener('click', ()=>{
-  newGame(diffEl.value);
+  newGame(diffEl.value, dailyToggle.checked);
 });
 
-diffEl.addEventListener('change', ()=>{
-  newGame(diffEl.value);
+btnSettings.addEventListener('click', ()=>{
+  dialog.showModal();
 });
 
-function checkWin(){
-  if (grid.every((v,i)=> v!==0 && v===solution[i])){
-    stopTimer();
-    statusEl.textContent = `Completed in ${timerEl.textContent}! 🎉`;
-    localStorage.removeItem('aastha_sudoku_state');
-  }
+themeSelect.addEventListener('change', ()=>{
+  document.documentElement.dataset.theme = themeSelect.value;
+  savePrefs();
+});
+sizeSelect.addEventListener('change', ()=>{
+  document.documentElement.dataset.size = sizeSelect.value;
+  savePrefs();
+});
+dailyToggle.addEventListener('change', ()=> savePrefs());
+mistakeLimitToggle.addEventListener('change', ()=>{ mistakeLimited = mistakeLimitToggle.checked; savePrefs(); });
+smartNotesToggle.addEventListener('change', ()=> savePrefs());
+highlightPeersToggle.addEventListener('change', ()=> render());
+
+function pulseStatus(msg){
+  statusEl.textContent = msg;
+  statusEl.style.opacity = 1;
+  setTimeout(()=> statusEl.style.opacity = '', 300);
 }
 
-// ---- Timer ----
+function gameOver(){
+  stopTimer();
+  pulseStatus('Reached 3 mistakes. Try again!');
+}
+
 function startTimer(){
   stopTimer();
   timer.start = Date.now() - timer.elapsed;
@@ -284,18 +333,28 @@ function startTimer(){
 function stopTimer(){ if (timer.int) clearInterval(timer.int); timer.int = null; }
 function resetTimer(){ timer.elapsed = 0; timerEl.textContent = "00:00"; }
 
-// ---- Persistence ----
 function save(){
   const data = {
     grid, given, solution,
     notes: notes.map(s=> [...s]),
     selected, noteMode,
     diff: diffEl.value,
-    timerElapsed: timer.elapsed
+    timerElapsed: timer.elapsed,
+    mistakes
   };
   localStorage.setItem('aastha_sudoku_state', JSON.stringify(data));
 }
-
+function savePrefs(){
+  const prefs = {
+    theme: themeSelect.value,
+    size: sizeSelect.value,
+    daily: dailyToggle.checked,
+    mistakeLimit: mistakeLimitToggle.checked,
+    smartNotes: smartNotesToggle.checked,
+    highlight: highlightPeersToggle.checked
+  };
+  localStorage.setItem('aastha_sudoku_prefs', JSON.stringify(prefs));
+}
 function loadSaved(){
   try{
     const raw = localStorage.getItem('aastha_sudoku_state');
@@ -309,15 +368,37 @@ function loadSaved(){
     noteMode = !!d.noteMode;
     diffEl.value = d.diff ?? 'medium';
     timer.elapsed = d.timerElapsed ?? 0;
+    mistakes = d.mistakes || 0;
     btnNotes.classList.toggle('active', noteMode);
     return true;
   }catch(e){ console.warn(e); return false; }
 }
+function loadPrefs(){
+  try{
+    const raw = localStorage.getItem('aastha_sudoku_prefs');
+    if (!raw) return;
+    const p = JSON.parse(raw);
+    themeSelect.value = p.theme || 'pink';
+    sizeSelect.value = p.size || 'cozy';
+    dailyToggle.checked = !!p.daily;
+    mistakeLimitToggle.checked = !!p.mistakeLimit;
+    smartNotesToggle.checked = p.smartNotes!==false;
+    highlightPeersToggle.checked = p.highlight!==false;
+    document.documentElement.dataset.theme = themeSelect.value;
+    document.documentElement.dataset.size = sizeSelect.value;
+    mistakeLimited = mistakeLimitToggle.checked;
+  }catch(e){}
+}
 
-// ---- Game setup ----
-function newGame(difficulty='medium'){
-  // Generate new board
+function newGame(difficulty='medium', daily=false){
+  if (daily){
+    RNG = mulberry32(seedFromDate(new Date(), difficulty));
+  }else{
+    RNG = Math.random;
+  }
+
   undoStack = [];
+  mistakes = 0;
   noteMode = false;
   btnNotes.classList.remove('active');
 
@@ -332,7 +413,52 @@ function newGame(difficulty='medium'){
   buildBoard(); buildNumpad(); render(); save();
 }
 
-// Initialize
-buildBoard(); buildNumpad();
-if (!loadSaved()) newGame('medium');
+function checkWin(){
+  if (grid.every((v,i)=> v!==0 && v===solution[i])){
+    stopTimer();
+    celebrate();
+    statusEl.textContent = `Completed in ${timerEl.textContent}! 🎉`;
+    localStorage.removeItem('aastha_sudoku_state');
+  }
+}
+
+let confettiAnim = null;
+function celebrate(){
+  const rect = boardEl.getBoundingClientRect();
+  confetti.width = rect.width; confetti.height = rect.height;
+  const parts = [];
+  for(let i=0;i<120;i++){
+    parts.push({
+      x: Math.random()*rect.width,
+      y: -10 - Math.random()*50,
+      r: 4 + Math.random()*6,
+      vy: 1 + Math.random()*2,
+      vx: (Math.random()-0.5)*1.5,
+      color: i%3===0 ? '#ff7ab6' : (i%3===1 ? '#ffa8d6' : '#ffc1e6'),
+      a: Math.random()*Math.PI
+    });
+  }
+  const start = performance.now();
+  function step(t){
+    ctx.clearRect(0,0,confetti.width, confetti.height);
+    for(const p of parts){
+      p.x += p.vx;
+      p.y += p.vy;
+      p.a += 0.1;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.a);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r*0.6);
+      ctx.restore();
+    }
+    if (t-start < 4000) confettiAnim = requestAnimationFrame(step);
+    else ctx.clearRect(0,0,confetti.width, confetti.height);
+  }
+  if (confettiAnim) cancelAnimationFrame(confettiAnim);
+  confettiAnim = requestAnimationFrame(step);
+}
+
+buildBoard(); buildNumpad(); loadPrefs();
+if (!loadSaved()) newGame('medium', dailyToggle.checked);
 else { render(); startTimer(); }
